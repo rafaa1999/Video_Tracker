@@ -1,4 +1,8 @@
 const listOfVidsElm = document.getElementById('listOfRequests');
+const state = {
+  sortBy : 'newFirst',
+  searchTerm : '',
+}
 
 function getSingleVidReq(vidInfo, isPrepend="false"){
   const vidReqContainerElm = document.createElement('div');
@@ -67,8 +71,8 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
 
 }
 
-function loadAllVidReq(sortBy = 'newFirst'){
-  fetch(`http://localhost:3000/video-request?sortBy=${sortBy}`)
+function loadAllVidReq(sortBy = 'newFirst', searchTerm = ''){
+  fetch(`http://localhost:3000/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}`)
   .then(bold=>bold.json())
   .then(data=>{
     listOfVidsElm.innerHTML = '';
@@ -78,42 +82,68 @@ function loadAllVidReq(sortBy = 'newFirst'){
   });
 };
 
+function debounce(fn, time){
+  let timeout;
+
+  return function(...args){
+    clearTimeout(timeout);
+    timeout = setTimeout(() => fn.apply(this, args), time)
+
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function(){
 
   const formVidReqElm = document.getElementById('formVideoRequest');
   const sortByElm = document.querySelectorAll('[id*=sort_by_]');
-  
+  const searchBoxElm = document.getElementById('search_box');
+
   loadAllVidReq();
 
-  sortByElm.forEach(elm => {
-    elm.addEventListener('click', function(e){
-      e.preventDefault();
-      let sortBy = this.querySelector('input').value;
-      loadAllVidReq(sortBy);
+  // sort
+      sortByElm.forEach(elm => {
+        elm.addEventListener('click', function(e){
+          e.preventDefault();
+           state.sortBy = this.querySelector('input').value;
+          loadAllVidReq(state.sortBy);
 
-      this.classList.add('active');
-      if(sortBy === 'topVotedFirst'){
-        document.getElementById('sort_by_new').classList.remove('active');
-      }else{
-        document.getElementById('sort_by_top').classList.remove('active');
-      }
+          this.classList.add('active');
+          if(state.sortBy === 'topVotedFirst'){
+            document.getElementById('sort_by_new').classList.remove('active');
+          }else{
+            document.getElementById('sort_by_top').classList.remove('active');
+          }
 
-    }) 
-  })
+        }) 
+      })
+  // sort
 
-  formVidReqElm.addEventListener('submit',(e)=>{
-    e.preventDefault(); 
+  // search
+      searchBoxElm.addEventListener('input',
+      debounce((e)=>{
+        state.searchTerm = e.target.value;
+        loadAllVidReq(state.sortBy, state.searchTerm);
+      },300)
+      );
+  // search
 
-    const formData = new FormData(formVidReqElm);
 
-    fetch('http://localhost:3000/video-request',{
-      method:"POST",
-      body: formData,
-    }).then((bold) => bold.json())
-    .then((data)=>{
-      console.log(data);
-      getSingleVidReq(data, true);
+  // submit
+      formVidReqElm.addEventListener('submit',(e)=>{
+        e.preventDefault(); 
+
+        const formData = new FormData(formVidReqElm);
+
+        fetch('http://localhost:3000/video-request',{
+          method:"POST",
+          body: formData,
+        }).then((bold) => bold.json())
+        .then((data)=>{
+          console.log(data);
+          getSingleVidReq(data, true);
+        })
     })
-})
+  // submit
+
 
 })
