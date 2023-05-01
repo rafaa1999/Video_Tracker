@@ -6,8 +6,8 @@ module.exports = {
     return newRequest.save();
   },
 
-  getAllVideoRequests: (top) => {
-    return VideoRequest.find({}).sort({ submit_date: '-1' }).limit(top);
+  getAllVideoRequests: () => {
+    return VideoRequest.find({}).sort({ submit_date: '-1' });
   },
 
   searchRequests: (topic) => {

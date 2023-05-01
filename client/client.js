@@ -20,7 +20,7 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
 
         <div class="d-flex flex-column text-center">
           <a id="votes_ups_${vidInfo._id}" class="btn btn-link">🔺</a>
-          <h3 id="score_vote_${vidInfo._id}">0</h3>
+          <h3 id="score_vote_${vidInfo._id}">${vidInfo.votes.ups - vidInfo.votes.downs}</h3>
           <a id="votes_downs_${vidInfo._id}" class="btn btn-link">🔻</a>
         </div>
       </div>
@@ -67,8 +67,8 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
 
 }
 
-function loadAllVidReq(){
-  fetch(`http://localhost:3000/video-request`)
+function loadAllVidReq(sortBy = 'newFirst'){
+  fetch(`http://localhost:3000/video-request?sortBy=${sortBy}`)
   .then(bold=>bold.json())
   .then(data=>{
     listOfVidsElm.innerHTML = '';
@@ -81,9 +81,26 @@ function loadAllVidReq(){
 document.addEventListener("DOMContentLoaded", function(){
 
   const formVidReqElm = document.getElementById('formVideoRequest');
-
-  loadAllVidReq();
+  const sortByElm = document.querySelectorAll('[id*=sort_by_]');
   
+  loadAllVidReq();
+
+  sortByElm.forEach(elm => {
+    elm.addEventListener('click', function(e){
+      e.preventDefault();
+      let sortBy = this.querySelector('input').value;
+      loadAllVidReq(sortBy);
+
+      this.classList.add('active');
+      if(sortBy === 'topVotedFirst'){
+        document.getElementById('sort_by_new').classList.remove('active');
+      }else{
+        document.getElementById('sort_by_top').classList.remove('active');
+      }
+
+    }) 
+  })
+
   formVidReqElm.addEventListener('submit',(e)=>{
     e.preventDefault(); 
 
@@ -97,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function(){
       console.log(data);
       getSingleVidReq(data, true);
     })
-
 })
 
 })
