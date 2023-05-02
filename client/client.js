@@ -25,7 +25,9 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
 
         <div class="d-flex flex-column text-center">
           <a id="votes_ups_${vidInfo._id}" class="btn btn-link">🔺</a>
-          <h3 id="score_vote_${vidInfo._id}">${vidInfo.votes.ups - vidInfo.votes.downs}</h3>
+          <h3 id="score_vote_${vidInfo._id}">${
+            vidInfo.votes.ups.length - vidInfo.votes.downs.length
+          }</h3>
           <a id="votes_downs_${vidInfo._id}" class="btn btn-link">🔻</a>
         </div>
       </div>
@@ -51,7 +53,7 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
   }else{
     listOfVidsElm.appendChild(vidReqContainerElm);
   }
-
+  
   const scoreVote = document.getElementById(`score_vote_${vidInfo._id}`);
   const votesElms = document.querySelectorAll(`[id^=votes_][id$=_${vidInfo._id}]`);
 
@@ -62,10 +64,10 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
       fetch('http://localhost:3000/video-request/vote', {
         method: 'PUT',
         headers: {'content-Type': 'application/json'},
-        body: JSON.stringify({ id , vote_type})
+        body: JSON.stringify({ id , vote_type, user_id: state.userId})
       }).then(blob => blob.json())
       .then(data => {
-        scoreVote.innerHTML = data.votes.ups - data.votes.downs;
+        scoreVote.innerText = data.ups.length - data.downs.length ;
       })
     })
   })

@@ -46,8 +46,8 @@ router.get('/video-request', async (req, res, next) => {
 router.use(express.json());
 
 router.put('/video-request/vote', async (req, res, next) => {
-  const { id, vote_type } = req.body;
-  const response = await VideoRequestData.updateVoteForRequest(id, vote_type);
+  const { id, vote_type, user_id } = req.body;
+  const response = await VideoRequestData.updateVoteForRequest(id, vote_type, user_id);
   res.send(response);
   next();
 });
