@@ -15,7 +15,7 @@ router.use(express.json());
 
 router.post('/users/login', async (req, res, next) => {
   const response = await UserService.createUser(req.body);
-  res.redirect(`http://localhost:5500?id=${response._id}`);
+  res.redirect(`http://localhost:5500/client/index.html?id=${response._id}`);
   next();
 });
 

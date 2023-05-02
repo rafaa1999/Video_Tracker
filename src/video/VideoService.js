@@ -1,7 +1,14 @@
 const VideoRequest = require('./Video');
+const User = require('../user/User')
 
 module.exports = {
-  createRequest: (vidRequestData) => {
+  createRequest: async (vidRequestData) => {
+    const authorId = vidRequestData.author_id;
+    if(authorId){
+      const userObj = await User.findOne({_id: authorId});
+      vidRequestData.author_name = userObj.author_name;
+      vidRequestData.author_email = userObj.author_email;
+    }
     let newRequest = new VideoRequest(vidRequestData);
     return newRequest.save();
   },
@@ -28,7 +35,6 @@ module.exports = {
         date: resVideo && new Date(),
       },
     };
-
     return VideoRequest.findByIdAndUpdate(id, updates, { new: true });
   },
 

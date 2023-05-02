@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const VideoRequestData = require('./VideoService');
+const multer = require('multer');
 
 router.use(bodyParser.urlencoded({ extended: true }));
 
@@ -9,7 +10,9 @@ router.get('/', (req, res) =>
   res.send('Welcome to video_tracker project')
 );
 
-router.post('/video-request', async (req, res, next) => {
+const upload = multer();
+
+router.post('/video-request', upload.none(), async (req, res, next) => {
   const response = await VideoRequestData.createRequest(req.body);
   res.send(response);
   next();
