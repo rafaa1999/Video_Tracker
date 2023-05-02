@@ -56,6 +56,7 @@ router.put('/video-request', async (req, res, next) => {
   const { id, status, resVideo } = req.body;
 
   const response = await VideoRequestData.updateRequest(id, status, resVideo);
+  console.log(response)
   res.send(response);
   next();
 });
