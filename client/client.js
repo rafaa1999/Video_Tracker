@@ -54,7 +54,7 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
           <a id="votes_ups_${vidInfo._id}" class="btn btn-link">🔺</a>
           <h3 id="score_vote_${vidInfo._id}">${
             vidInfo.votes.ups.length - vidInfo.votes.downs.length
-          }</h3>
+          } </h3>
           <a id="votes_downs_${vidInfo._id}" class="btn btn-link">🔻</a>
         </div>
       </div>
@@ -146,7 +146,7 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
   }
 }
     
-  applyVoteStyle(vidInfo._id, vidInfo.votes, vidInfo.status == 'done');
+  applyVoteStyle(vidInfo._id, vidInfo, vidInfo.status == 'done');
 
   const scoreVote = document.getElementById(`score_vote_${vidInfo._id}`);
   const votesElms = document.querySelectorAll(`[id^=votes_][id$=_${vidInfo._id}]`);
@@ -165,7 +165,8 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
         body: JSON.stringify({ id , vote_type , user_id: state.userId })
       }).then(bold => bold.json())
         .then(data => {
-          scoreVote.innerText = data.ups.length - data.downs.length ;
+          // console.log(data)
+          scoreVote.innerText = data.votes.ups.length - data.votes.downs.length ;
           applyVoteStyle(id, data, vidInfo.status == 'done', vote_type)
         })
     })
@@ -177,6 +178,7 @@ function applyVoteStyle(video_id, votes_list, isDisabled, vote_type){
   const voteUpsElm = document.getElementById(`votes_ups_${video_id}`);
   const voteDownsElm = document.getElementById(`votes_downs_${video_id}`);
 
+
   if(isDisabled){
     voteUpsElm.style.opacity = '0.5'
     voteUpsElm.style.cursor = 'not-allowed'
@@ -186,9 +188,9 @@ function applyVoteStyle(video_id, votes_list, isDisabled, vote_type){
   }
 
   if(!vote_type){
-    if(votes_list.ups.includes(state.userId)){
+    if(votes_list.votes.ups.includes(state.userId)){
       vote_type = 'ups';
-    }else if(votes_list.downs.includes(state.userId)){
+    }else if(votes_list.votes.downs.includes(state.userId)){
       vote_type = 'downs';
     }else{
       return;
@@ -197,8 +199,8 @@ function applyVoteStyle(video_id, votes_list, isDisabled, vote_type){
 
   const voteDirElm = vote_type === 'ups' ? voteUpsElm : voteDownsElm
   const otherDirElm = vote_type === 'ups' ? voteDownsElm : voteUpsElm
-  
-  if(votes_list[vote_type].includes(state.userId)){
+
+  if(votes_list.votes[vote_type].includes(state.userId)){
     voteDirElm.style.opacity = 1;
     otherDirElm.style.opacity = '0.5';
   }else{
@@ -271,7 +273,6 @@ document.addEventListener("DOMContentLoaded", function(){
   const searchBoxElm = document.getElementById('search_box');
   const filterByElms = document.querySelectorAll('[id^=filter_by_]')
 
-
   const formLoginElm = document.querySelector('.form-login');
   const appContentElm = document.querySelector('.app-content');
 
@@ -327,7 +328,6 @@ document.addEventListener("DOMContentLoaded", function(){
       },300)
       );
   // search
-
 
   // submit
       formVidReqElm.addEventListener('submit',(e)=>{
