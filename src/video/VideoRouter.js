@@ -19,12 +19,12 @@ router.post('/video-request', upload.none(), async (req, res, next) => {
 });
 
 router.get('/video-request', async (req, res, next) => {
-  const { sortBy, searchTerm } = req.query;
+  const { sortBy, searchTerm, filterBy } = req.query;
   let data;
   if(searchTerm){
-    data = await VideoRequestData.searchRequests(searchTerm)
+    data = await VideoRequestData.searchRequests(searchTerm, filterBy);
   }else{
-    data = await VideoRequestData.getAllVideoRequests();
+    data = await VideoRequestData.getAllVideoRequests(filterBy);
   }
   if( sortBy === 'topVotedFirst'){
     data =  data.sort((prev, next)=>{

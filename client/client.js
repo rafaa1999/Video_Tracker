@@ -3,6 +3,7 @@ const SUPER_USER_ID = '1990411';
 const state = {
   sortBy : 'newFirst',
   searchTerm : '',
+  filterBy : 'all',
   userId : '',
   isSuperUser : false
 }
@@ -12,16 +13,14 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
   vidReqContainerElm.innerHTML = `
 
   <div class="card mb-3">
-        
-
         ${ state.isSuperUser ? `<div class="card-header d-flex justify-content-between">
-        <select id="admin_change_status_${vidInfo._id}" >
+        <select id="admin_change_status_${vidInfo._id}">
           <option value="new">new</option>
           <option value="planned">planned</option>
           <option value="done">done</option>
         </select>
-        <div class="input-group ml-2 mr-5  ${vidInfo.status !== 'done' ? 'd-none': ''}" id="admin_video_res_container_${vidInfo._id}">
-          <input type="text" class="form-control" id="admin_video_res_${vidInfo._id}" 
+        <div class="input-group ml-2 mr-5 ${vidInfo.status !== 'done' ? 'd-none': ''}" id="admin_video_res_container_${vidInfo._id}">
+          <input type="text" class="form-control" id="admin_video_res_${vidInfo._id}"
             placeholder="paste here youtube video id">
           <div class="input-group-append">
             <button class="btn btn-outline-secondary" 
@@ -45,6 +44,12 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
           </p>
         </div>
 
+        ${ vidInfo.status == 'done'? `<div class="ml-auto mr-3">
+        <iframe width="240" height="135"
+      src="https://www.youtube.com/embed/${vidInfo.video_ref.link}" 
+      frameborder="0" allowfullscreen></iframe>
+      </div>` : ''}
+
         <div class="d-flex flex-column text-center">
           <a id="votes_ups_${vidInfo._id}" class="btn btn-link">🔺</a>
           <h3 id="score_vote_${vidInfo._id}">${
@@ -54,8 +59,12 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
         </div>
       </div>
       <div class="card-footer d-flex flex-row justify-content-between">
-        <div>
-          <span>${vidInfo.status.toUpperCase()}</span>
+        <div class="${
+          vidInfo.status == 'done' ? 'text-success' : vidInfo.status == 'planned' ? 'text-primary' : ''
+        }">
+          <span>${
+            vidInfo.status.toUpperCase()} ${ vidInfo.status == 'done' ? `on ${new Date(vidInfo.video_ref.date).toLocaleDateString()}` : ''
+          }</span>
           &bullet; added by <strong>${vidInfo.author_name}</strong> on
           <strong>${new Date(vidInfo.submit_date).toLocaleDateString()}</strong>
         </div>
@@ -67,7 +76,7 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
           </div>
         </div>
       </div>
-  </div>
+      </div>
   `;
 
   if(isPrepend){
@@ -83,8 +92,6 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
   const adminDeleteVideoReqElm = document.getElementById(`admin_delete_video_req_${vidInfo._id}`)
 
   if(state.isSuperUser){
-
-  console.log(vidInfo.status);
 
   adminChangeStatusElm.value = vidInfo.status;
   adminVideoResElm.value = vidInfo.video_ref.link
@@ -144,23 +151,23 @@ function getSingleVidReq(vidInfo, isPrepend="false"){
   const scoreVote = document.getElementById(`score_vote_${vidInfo._id}`);
   const votesElms = document.querySelectorAll(`[id^=votes_][id$=_${vidInfo._id}]`);
 
-  votesElms.forEach(elm =>{
+  votesElms.forEach(elm=>{
+    if(state.isSuperUser || vidInfo.status == 'done'){
+      return
+    }
     elm.addEventListener('click', function(e){
-      if(state.isSuperUser || vidInfo.status == 'done'){
-        return
-      }
-      e.preventDefault();
-      const [, vote_type, id] = e.target.getAttribute('id').split('_');
-      fetch('http://localhost:3000/video-request/vote', {
+      e.preventDefault()
+      // votes_ups_63a0a72409b3fa2bf479b031
+      const [, vote_type, id] = e.target.getAttribute('id').split('_')
+      fetch('http://localhost:3000/video-request/vote',{
         method: 'PUT',
         headers: {'content-Type': 'application/json'},
-        body: JSON.stringify({ id , vote_type, user_id: state.userId})
-      }).then(blob => blob.json())
-      .then(data => {
-        scoreVote.innerText = data.ups.length - data.downs.length ;
-        applyVoteStyle(id, data, vidInfo.status == 'done', vote_type);
-
-      })
+        body: JSON.stringify({ id , vote_type , user_id: state.userId })
+      }).then(bold => bold.json())
+        .then(data => {
+          scoreVote.innerText = data.ups.length - data.downs.length ;
+          applyVoteStyle(id, data, vidInfo.status == 'done', vote_type)
+        })
     })
   })
 
@@ -199,8 +206,8 @@ function applyVoteStyle(video_id, votes_list, isDisabled, vote_type){
   }
 }
 
-function loadAllVidReq(sortBy = 'newFirst', searchTerm = ''){
-  fetch(`http://localhost:3000/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}`)
+function loadAllVidReq(sortBy = 'newFirst', searchTerm = '', filterBy = 'all'){
+  fetch(`http://localhost:3000/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}&filterBy=${filterBy}`)
   .then(bold=>bold.json())
   .then(data=>{
     listOfVidsElm.innerHTML = '';
@@ -262,6 +269,8 @@ document.addEventListener("DOMContentLoaded", function(){
   const formVidReqElm = document.getElementById('formVideoRequest');
   const sortByElm = document.querySelectorAll('[id*=sort_by_]');
   const searchBoxElm = document.getElementById('search_box');
+  const filterByElms = document.querySelectorAll('[id^=filter_by_]')
+
 
   const formLoginElm = document.querySelector('.form-login');
   const appContentElm = document.querySelector('.app-content');
@@ -273,14 +282,24 @@ document.addEventListener("DOMContentLoaded", function(){
 
     if(state.userId === SUPER_USER_ID){
       state.isSuperUser = true;
-      console.log(state.userId)
-      console.log(document.querySelector('.normal-user-content'))
       document.querySelector('.normal-user-content').classList.add('d-none')
    }
 
     formLoginElm.classList.add('d-none');
     appContentElm.classList.remove('d-none');
  }
+
+  // filter
+        filterByElms.forEach(elm=>{
+          elm.addEventListener('click', function(e){
+            e.preventDefault();
+            state.filterBy = e.target.getAttribute('id').split('_')[2];
+            filterByElms.forEach(option=> option.classList.remove('active'));
+            this.classList.add('active');
+            loadAllVidReq(state.sortBy, state.searchTerm, state.filterBy);
+          })
+        })
+  // filter
 
   // sort
       sortByElm.forEach(elm => {
