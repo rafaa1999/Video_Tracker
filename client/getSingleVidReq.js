@@ -8,6 +8,93 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString();
 }
 
+function getAdminDOM(id, status){
+  return `<div class="card-header d-flex justify-content-between">
+              <select id="admin_change_status_${id}">
+                <option value="new">new</option>
+                <option value="planned">planned</option>
+                <option value="done">done</option>
+              </select>
+              <div class="input-group ml-2 mr-5 ${status !== 'done' ? 'd-none': ''}" id="admin_video_res_container_${id}">
+                <input type="text" class="form-control" id="admin_video_res_${id}"
+                  placeholder="paste here youtube video id">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" 
+                    type="button"  id="admin_save_video_res_${id}">Save</button>
+                </div>
+              </div>
+              <button class='btn btn-danger' id="admin_delete_video_req_${id}">delete</button>
+          </div>
+         ` 
+}
+
+function bindAdminActions(id, state, status, videoRef, title){
+  const adminChangeStatusElm = document.getElementById(`admin_change_status_${id}`)
+  const adminVideoResElm = document.getElementById(`admin_video_res_${id}`)
+  const adminVideoResContainer = document.getElementById(`admin_video_res_container_${id}`)
+  const adminSaveVideoResElm = document.getElementById(`admin_save_video_res_${id}`)
+  const adminDeleteVideoReqElm = document.getElementById(`admin_delete_video_req_${id}`)
+
+  if(state.isSuperUser){
+
+  adminChangeStatusElm.value = status;
+  adminVideoResElm.value = videoRef.link
+
+  adminChangeStatusElm.addEventListener('change', (e)=>{
+    if(e.target.value === "done"){
+      adminVideoResContainer.classList.remove('d-none');
+    }else{
+      API.updateVideoStatus(id, e.target.value)
+    }
+  })
+
+  adminSaveVideoResElm.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(!adminVideoResElm.value){
+      adminVideoResElm.classList.add('is-invalid')
+      adminVideoResElm.addEventListener('input', ()=>{
+        adminVideoResElm.classList.remove('is-invalid')
+      })
+      return;
+    }
+    API.updateVideoStatus(id, 'done', adminVideoResElm.value)
+  })
+
+  adminDeleteVideoReqElm.addEventListener('click',(e)=>{
+    e.preventDefault()
+
+    const isSure = confirm(`Are you sure you want to delete "${title}"`)
+    if(!isSure) return;
+
+    dataService.deleteVideoReq(id)
+
+  })
+ 
+ }
+}
+
+function bindVotesActions(id, status, state){
+  const votesElms = document.querySelectorAll(`[id^=votes_][id$=_${id}]`);
+
+  votesElms.forEach(elm=>{
+    if(state.isSuperUser || status == 'done'){
+      return
+    }
+    elm.addEventListener('click', function(e){
+      e.preventDefault()
+      // votes_ups_63a0a72409b3fa2bf479b031
+      const [, vote_type, id] = e.target.getAttribute('id').split('_')
+      dataService.updateVotes(
+                              id, 
+                              vote_type,
+                              state.userId,
+                              status === "done", 
+                              state
+                            )
+    })
+  })
+}
+
 export function getSingleVidReq(vidInfo, state, isPrepend="false"){
 
   const {
@@ -29,27 +116,8 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
 
   const vidReqContainerElm = document.createElement('div');
   vidReqContainerElm.innerHTML = `
-
   <div class="card mb-3">
-        ${ state.isSuperUser ? `<div class="card-header d-flex justify-content-between">
-        <select id="admin_change_status_${id}">
-          <option value="new">new</option>
-          <option value="planned">planned</option>
-          <option value="done">done</option>
-        </select>
-        <div class="input-group ml-2 mr-5 ${status !== 'done' ? 'd-none': ''}" id="admin_video_res_container_${id}">
-          <input type="text" class="form-control" id="admin_video_res_${id}"
-            placeholder="paste here youtube video id">
-          <div class="input-group-append">
-            <button class="btn btn-outline-secondary" 
-              type="button"  id="admin_save_video_res_${id}">Save</button>
-          </div>
-        </div>
-        <button class='btn btn-danger' id="admin_delete_video_req_${id}">delete</button>
-      </div>` 
-        : ''
-      }
-
+      ${ state.isSuperUser ? getAdminDOM(id, status) : '' }
       <div class="card-body d-flex justify-content-between flex-row">
         <div class="d-flex flex-column">
           <h3>${title}</h3>
@@ -94,88 +162,16 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
   `;
 
   if(isPrepend){
-    listOfVidsElm.prepend(vidReqContainerElm)
+    listOfVidsElm.prepend(vidReqContainerElm);
   }else{
     listOfVidsElm.appendChild(vidReqContainerElm);
   }
 
-  const adminChangeStatusElm = document.getElementById(`admin_change_status_${id}`)
-  const adminVideoResElm = document.getElementById(`admin_video_res_${id}`)
-  const adminVideoResContainer = document.getElementById(`admin_video_res_container_${id}`)
-  const adminSaveVideoResElm = document.getElementById(`admin_save_video_res_${id}`)
-  const adminDeleteVideoReqElm = document.getElementById(`admin_delete_video_req_${id}`)
+  bindAdminActions(id, state, status, videoRef, title);
 
-  if(state.isSuperUser){
-
-  adminChangeStatusElm.value = status;
-  adminVideoResElm.value = videoRef.link
-
-  adminChangeStatusElm.addEventListener('change', (e)=>{
-    if(e.target.value === "done"){
-      adminVideoResContainer.classList.remove('d-none');
-    }else{
-      API.updateVideoStatus(id, e.target.value)
-    }
-  })
-
-  adminSaveVideoResElm.addEventListener('click', (e)=>{
-    e.preventDefault();
-    if(!adminVideoResElm.value){
-      adminVideoResElm.classList.add('is-invalid')
-      adminVideoResElm.addEventListener('input', ()=>{
-        adminVideoResElm.classList.remove('is-invalid')
-      })
-      return;
-    }
-    API.updateVideoStatus(id, 'done', adminVideoResElm.value)
-  })
-
-  adminDeleteVideoReqElm.addEventListener('click',(e)=>{
-    e.preventDefault()
-
-    const isSure = confirm(`Are you sure you want to delete "${title}"`)
-    if(!isSure) return;
-
-    dataService.deleteVideoReq(id)
-
-  })
- 
-
-}
-    
   applyVoteStyle(id, state, vidInfo, status == 'done');
 
-  const scoreVote = document.getElementById(`score_vote_${id}`);
-  const votesElms = document.querySelectorAll(`[id^=votes_][id$=_${id}]`);
+  bindVotesActions(id, status, state);
 
-  votesElms.forEach(elm=>{
-    if(state.isSuperUser || status == 'done'){
-      return
-    }
-    elm.addEventListener('click', function(e){
-      e.preventDefault()
-      // votes_ups_63a0a72409b3fa2bf479b031
-      const [, vote_type, id] = e.target.getAttribute('id').split('_')
-      dataService.updateVotes(
-                              id, 
-                              vote_type,
-                              state.userId,
-                              status === "done", 
-                              state
-                            )
-
-      // fetch('http://localhost:3000/video-request/vote',{
-      //   method: 'PUT',
-      //   headers: {'content-Type': 'application/json'},
-      //   body: JSON.stringify({ id , vote_type , user_id: state.userId })
-      // }).then(bold => bold.json())
-      //   .then(data => {
-      //     // console.log(data)
-      //     scoreVote.innerText = data.votes.ups.length - data.votes.downs.length ;
-      //     applyVoteStyle(id, data, state, status == 'done', vote_type)
-      //   })
-
-    })
-  })
 
 }

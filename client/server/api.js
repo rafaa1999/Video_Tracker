@@ -1,6 +1,5 @@
 const apiUrl = 'http://localhost:3000';
 
-
 export default {
   videoReq: {
     get : (sortBy, searchTerm, filterBy) => {
