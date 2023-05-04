@@ -1,7 +1,8 @@
 import { debounce } from './debounce.js';
 import { getSingleVidReq } from './getSingleVidReq.js';
 import { checkValidity } from './checkValidity.js'
-import API from './api.js';
+import API from './dataService.js';
+import dataService from './dataService.js';
 
 const SUPER_USER_ID = '1990411';
 export const state = {
@@ -85,11 +86,8 @@ document.addEventListener("DOMContentLoaded", function(){
 
         if(!isValid) return;
 
-        fetch('http://localhost:3000/video-request',{
-          method:"POST",
-          body: formData,
-        }).then((bold) => bold.json())
-        .then((data)=>{
+        dataService.addVidReq(formData).then((data)=>{
+          console.log(data)
           getSingleVidReq(data, state, true);
         })
     })

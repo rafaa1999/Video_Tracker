@@ -1,5 +1,6 @@
 import { applyVoteStyle } from './applyVoteStyle.js'
-import API from './api.js'
+import dataService from './dataService.js';
+import API from './dataService.js'
 
 const listOfVidsElm = document.getElementById('listOfRequests');
 
@@ -117,15 +118,8 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
     const isSure = confirm(`Are you sure you want to delete "${vidInfo.topic_title}"`)
     if(!isSure) return;
 
-    fetch('http://localhost:3000/video-request',{
-      method: "DELETE",
-      headers: {'content-type' : 'application/json'},
-      body: JSON.stringify({id: vidInfo._id})
-    })
-    .then(res=>res.json())
-    .then(data=>{
-      window.location.reload()
-    })
+    dataService.deleteVideoReq(vidInfo._id)
+
   })
  
 
@@ -144,16 +138,25 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
       e.preventDefault()
       // votes_ups_63a0a72409b3fa2bf479b031
       const [, vote_type, id] = e.target.getAttribute('id').split('_')
-      fetch('http://localhost:3000/video-request/vote',{
-        method: 'PUT',
-        headers: {'content-Type': 'application/json'},
-        body: JSON.stringify({ id , vote_type , user_id: state.userId })
-      }).then(bold => bold.json())
-        .then(data => {
-          // console.log(data)
-          scoreVote.innerText = data.votes.ups.length - data.votes.downs.length ;
-          applyVoteStyle(id, data, state, vidInfo.status == 'done', vote_type)
-        })
+      dataService.updateVotes(
+                              id, 
+                              vote_type,
+                              state.userId,
+                              vidInfo.status === "done", 
+                              state
+                            )
+
+      // fetch('http://localhost:3000/video-request/vote',{
+      //   method: 'PUT',
+      //   headers: {'content-Type': 'application/json'},
+      //   body: JSON.stringify({ id , vote_type , user_id: state.userId })
+      // }).then(bold => bold.json())
+      //   .then(data => {
+      //     // console.log(data)
+      //     scoreVote.innerText = data.votes.ups.length - data.votes.downs.length ;
+      //     applyVoteStyle(id, data, state, vidInfo.status == 'done', vote_type)
+      //   })
+
     })
   })
 
