@@ -4,6 +4,10 @@ import API from './dataService.js'
 
 const listOfVidsElm = document.getElementById('listOfRequests');
 
+function formatDate(date) {
+  return new Date(date).toLocaleDateString();
+}
+
 export function getSingleVidReq(vidInfo, state, isPrepend="false"){
 
   const {
@@ -20,6 +24,8 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
   } = vidInfo;
 
   const statusClass =  status == 'done' ? 'text-success' : status == 'planned' ? 'text-primary' : '';
+  const voteScore = votes.ups.length - votes.downs.length;
+
 
   const vidReqContainerElm = document.createElement('div');
   vidReqContainerElm.innerHTML = `
@@ -64,19 +70,17 @@ export function getSingleVidReq(vidInfo, state, isPrepend="false"){
 
         <div class="d-flex flex-column text-center">
           <a id="votes_ups_${id}" class="btn btn-link">🔺</a>
-          <h3 id="score_vote_${id}">${
-            votes.ups.length - votes.downs.length
-          } </h3>
+          <h3 id="score_vote_${id}">${voteScore} </h3>
           <a id="votes_downs_${id}" class="btn btn-link">🔻</a>
         </div>
       </div>
       <div class="card-footer d-flex flex-row justify-content-between">
         <div class="${ statusClass }">
           <span>${
-            status.toUpperCase()} ${ status == 'done' ? `on ${new Date(videoRef.date).toLocaleDateString()}` : ''
+            status.toUpperCase()} ${ status == 'done' ? `on ${ formatDate(videoRef.date)}` : ''
           }</span>
           &bullet; added by <strong>${author}</strong> on
-          <strong>${new Date(submitDate).toLocaleDateString()}</strong>
+          <strong>${formatDate(submitDate)}</strong>
         </div>
         <div
           class="d-flex justify-content-center flex-column 408ml-auto mr-2"
