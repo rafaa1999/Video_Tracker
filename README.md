@@ -56,8 +56,6 @@ The following technologies were used in the creation of this project:
 -   Bootstrap
 -   DOM manipulation
 
-## Contributing
-
 If you'd like to contribute to this project, please create a pull request with your changes. Be sure to include a detailed description of your changes and the problem they solve.
 
 ## License
